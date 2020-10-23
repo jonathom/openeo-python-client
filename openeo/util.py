@@ -16,6 +16,9 @@ from typing import Any, Union, Tuple, Callable
 
 from deprecated import deprecated
 
+import uuid
+from string import Template
+
 logger = logging.getLogger(__name__)
 
 
@@ -474,3 +477,40 @@ def legacy_alias(orig: Callable, name: str, action="always", category=Deprecatio
     if post_process:
         wrapper = post_process(wrapper)
     return wrapper
+
+def show_vue_component(component, parameters):
+    libs = [
+        "https://cdn.jsdelivr.net/npm/vue",
+        "https://cdn.jsdelivr.net/npm/leaflet@1.6/dist/leaflet.js",
+        "https://cdn.jsdelivr.net/npm/leaflet.antimeridian@1/dist/leaflet.antimeridian-src.min.js",
+        "https://cdn.jsdelivr.net/npm/@openeo/vue-components@1.0.0-rc.4/assets/openeo-vue.umd.min.js"
+    ]
+    styles = [
+        "https://cdn.jsdelivr.net/npm/leaflet@1.6/dist/leaflet.css",
+        "https://cdn.jsdelivr.net/npm/@openeo/vue-components@1.0.0-rc.4/assets/openeo-vue.css"
+    ]
+    
+    html = ""
+    for lib in libs:
+        html += '<script src="{}"></script>'.format(lib)
+    for style in styles:
+        html += '<link rel="stylesheet" href="{}">'.format(style)
+
+    template = Template("""
+    <div id="$uid"></div>
+    <script>
+      new Vue({
+        el: '#$uid',
+        render: h => h(window['openeo-vue'].$component, { 
+          props: $parameters
+        })
+      });
+    </script>
+    """)
+    html += template.substitute(
+        uid = 'vue-' + uuid.uuid4().hex, # add prefix as HTML ids starting with numbers are problematic
+        component = component,
+        parameters = json.dumps(parameters)
+    )
+    
+    return html

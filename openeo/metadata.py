@@ -2,7 +2,7 @@ import warnings
 from collections import namedtuple
 from typing import List, Union, Tuple, Callable
 
-from openeo.util import deep_get
+from openeo.util import deep_get, show_vue_component
 
 
 class MetadataException(Exception):
@@ -384,3 +384,17 @@ class CollectionMetadata:
         else:
             dim = Dimension(type=type or "other", name=name)
         return self._clone_and_update(dimensions=self._dimensions + [dim])
+    
+    def _repr_html_(self):
+        if self._orig_metadata.get('stac_version') == "0.6.2":
+            version = "0.4.0"
+        else:
+            version = "1.0.0"
+
+        return show_vue_component(
+            component = 'Collection',
+            parameters = {
+                "collectionData": self._orig_metadata,
+                "version": version
+            }
+        )
